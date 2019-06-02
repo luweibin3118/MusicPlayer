@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/home_music_all"
+            style="@style/home_category_style"
+            android:text="所有歌曲" />
+
+        <TextView
+            android:id="@+id/home_music_like"
+            style="@style/home_category_style"
+            android:text="收藏歌曲" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <TextView
+            style="@style/home_category_style"
+            android:text="我的歌单" />
+
+        <TextView
+            android:id="@+id/home_music_recent"
+            style="@style/home_category_style"
+            android:text="最近播放" />
+
+    </LinearLayout>
+
+
+</LinearLayout>
