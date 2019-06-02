@@ -1,6 +1,7 @@
 # MusicPlayer
 Android Music Player
 
- ![image](https://github.com/luweibin3118/PieChartView/blob/master/app/Screenshot_20180112-211844.png)
+ ![image](https://github.com/luweibin3118/MusicPlayer/blob/master/QQ%E5%9B%BE%E7%89%8720190602215747.jpg)
 
- ![image](https://github.com/luweibin3118/PieChartView/blob/master/app/Screenshot_20180112-211844.png)
+ ![image](https://github.com/luweibin3118/MusicPlayer/blob/master/QQ%E5%9B%BE%E7%89%8720190602215741.jpg)
+
