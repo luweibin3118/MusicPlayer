@@ -469,6 +469,17 @@ public class MusicService extends Service {
 
     int lastPlayDuration = 0;
 
+    public int getCurrentRealPosition() {
+        if (mediaPlayer != null) {
+            try {
+                return mediaPlayer.getCurrentPosition();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return 0;
+    }
+
     public int getPosition() {
         if (!mediaPlayer.isPlaying()) {
             if (lastPlayDuration == 0) {
@@ -532,6 +543,10 @@ public class MusicService extends Service {
 
         public int getCurrentPosition() {
             return getPosition();
+        }
+
+        public int getRealPosition() {
+            return getCurrentRealPosition();
         }
 
         public void addMusicPlayCallback(MusicPlayCallback callback) {

@@ -248,7 +248,7 @@ public abstract class BaseMusicActivity extends BaseActivity implements MusicCon
         if (musicBinder == null) {
             return 0;
         }
-        return musicBinder.getCurrentPosition();
+        return musicBinder.getRealPosition();
     }
 
     protected abstract void onPauseUpdateUi();
