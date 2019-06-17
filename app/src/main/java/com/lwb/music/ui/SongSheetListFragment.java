@@ -10,7 +10,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -268,7 +267,6 @@ public class SongSheetListFragment extends BaseFragment implements SongSelectorF
         public void setSong(Song song) {
             this.song = song;
             musicTitle.setText(song.getDisplayName());
-            Log.i("TTTTT", song.getDisplayName() + "  " + song.getUpdateTime());
         }
 
     }

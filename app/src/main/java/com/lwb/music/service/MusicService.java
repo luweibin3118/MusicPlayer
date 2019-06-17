@@ -20,7 +20,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.blankj.utilcode.util.PermissionUtils;
@@ -288,7 +287,6 @@ public class MusicService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        Log.i("TTTTT", "onDestory");
         if (mediaPlayer != null && mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
             mediaPlayer.release();
@@ -304,7 +302,6 @@ public class MusicService extends Service {
     }
 
     private void playSong(final Song song, final int position) {
-        Log.i("TTTTTT", "play position: " + position);
         if (song == null) {
             return;
         }
@@ -416,7 +413,6 @@ public class MusicService extends Service {
         }
         SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_PATH, playingSong.getPath());
         SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_DURATION, mediaPlayer.getCurrentPosition());
-        Log.i("TTTTTT", "saveTime: " + mediaPlayer.getCurrentPosition());
         if (notification) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(musicServiceIntent);
@@ -495,7 +491,6 @@ public class MusicService extends Service {
                 SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_PATH, playingSong.getPath());
                 SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_DURATION, position);
                 positionSaveTime = System.currentTimeMillis();
-                Log.i("TTTTTT", "saveTime: " + position);
             }
 
             return position;

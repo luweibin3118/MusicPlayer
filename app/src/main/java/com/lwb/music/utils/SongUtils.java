@@ -7,7 +7,6 @@ import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.TextUtils;
-import android.util.Log;
 
 import com.lwb.music.bean.LrcFile;
 import com.lwb.music.bean.Song;
@@ -198,7 +197,6 @@ public class SongUtils {
             lrcFile.setPath(cursor.getString(0));
             lrcFile.setFileName(cursor.getString(1));
             lrcFileArrayList.add(lrcFile);
-            Log.i("TTTTT", lrcFile.getPath());
         }
         return lrcFileArrayList;
 
