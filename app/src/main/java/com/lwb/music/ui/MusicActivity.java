@@ -149,6 +149,7 @@ public class MusicActivity extends BaseMusicActivity implements View.OnClickList
             case R.id.play_music_img:
             case R.id.play_music_info:
                 startActivity(new Intent(this, MusicPlayActivity.class));
+                overridePendingTransition(R.anim.right_in_anim, R.anim.no_anim);
                 break;
             default:
                 break;

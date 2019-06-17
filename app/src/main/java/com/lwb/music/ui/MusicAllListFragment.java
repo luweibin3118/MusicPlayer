@@ -45,6 +45,17 @@ public class MusicAllListFragment extends BaseFragment {
     }
 
     @Override
+    protected String getTitle() {
+        String title = "";
+        try {
+            title = getArguments().getString("title");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return title;
+    }
+
+    @Override
     public void onResume() {
         super.onResume();
         musicAllList.scrollToPosition(0);
@@ -105,13 +116,14 @@ public class MusicAllListFragment extends BaseFragment {
 
     private static MusicAllListFragment allListFragment;
 
-    public static void start(Activity activity, ArrayList<Song> songList, MusicController controller) {
+    public static void start(Activity activity, ArrayList<Song> songList, MusicController controller, String title) {
         if (allListFragment == null) {
             allListFragment = new MusicAllListFragment();
         }
         allListFragment.setMusicController(controller);
         Bundle bundle = new Bundle();
         bundle.putParcelableArrayList("list", songList);
+        bundle.putString("title", title);
         allListFragment.setArguments(bundle);
         if (activity instanceof BaseActivity) {
             ((BaseActivity) activity).startFragment(allListFragment);

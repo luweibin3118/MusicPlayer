@@ -239,6 +239,11 @@ public abstract class BaseMusicActivity extends BaseActivity implements MusicCon
         onLrcLoadedUi(song);
     }
 
+    @Override
+    public final void onPrepareMusic(Song song) {
+        onRefreshDisplaySong(song);
+    }
+
     protected int getCurrentProcess() {
         if (musicBinder == null) {
             return 0;

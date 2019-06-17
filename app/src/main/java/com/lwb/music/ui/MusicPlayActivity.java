@@ -22,6 +22,7 @@ import com.blankj.utilcode.util.FileIOUtils;
 import com.blankj.utilcode.util.FileUtils;
 import com.blankj.utilcode.util.SPUtils;
 import com.blankj.utilcode.util.SizeUtils;
+import com.blankj.utilcode.util.ToastUtils;
 import com.lwb.music.App;
 import com.lwb.music.R;
 import com.lwb.music.bean.Song;
@@ -32,6 +33,7 @@ import com.lwb.music.utils.FastBlurUtil;
 import com.lwb.music.utils.SongUtils;
 import com.lwb.music.utils.TimeUtils;
 
+import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +71,7 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
             super.handleMessage(msg);
             if (msg.obj != null) {
                 music_lrc.setLrc((String) msg.obj);
+                music_lrc.setCurrentTime(getCurrentProcess());
             }
         }
     };
@@ -224,7 +227,11 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
         }
 
         if (song.getLrcFile() != null) {
-            loadLru(song);
+            if (song.getLrc() != null && song.getLrc().get() != null) {
+                music_lrc.setLrc(song.getLrc().get());
+            } else {
+                loadLru(song);
+            }
         } else {
             music_lrc.setLrc(null);
         }
@@ -239,12 +246,13 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
         App.execute(new Runnable() {
             @Override
             public void run() {
-                String lrc = FileIOUtils.readFile2String(
+                final String lrc = FileIOUtils.readFile2String(
                         song.getLrcFile(),
                         FileUtils.getFileCharsetSimple(song.getLrcFile()));
                 Message message = lrcHandler.obtainMessage();
                 message.obj = lrc;
                 message.sendToTarget();
+                song.setLrc(new SoftReference<String>(lrc));
             }
         });
     }
@@ -310,10 +318,7 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
         bundle.putParcelableArrayList("list", (ArrayList<? extends Parcelable>) songList);
         bundle.putParcelable("song", playingSong);
         tag.setArguments(bundle);
-        getSupportFragmentManager()
-                .beginTransaction()
-                .add(tag, getClass().getSimpleName())
-                .commitAllowingStateLoss();
+        tag.show(getSupportFragmentManager(), getClass().getName());
     }
 
     @Override
@@ -326,7 +331,9 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
 
     @Override
     public void onLikeChangedUi(Song song) {
-        music_like.setSelected(isFavorite(song));
+        boolean isFav = isFavorite(song);
+        ToastUtils.showShort(isFav ? "收藏成功！" : "已取消收藏");
+        music_like.setSelected(isFav);
     }
 
     @Override
@@ -338,6 +345,7 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
     @Override
     public void finish() {
         super.finish();
+        overridePendingTransition(R.anim.no_anim, R.anim.right_out_anim);
     }
 
     @Override
@@ -369,4 +377,3 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
         }
     }
 }
-

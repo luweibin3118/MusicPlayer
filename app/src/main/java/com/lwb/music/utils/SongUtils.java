@@ -6,9 +6,12 @@ import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.provider.MediaStore;
+import android.text.TextUtils;
+import android.util.Log;
 
 import com.lwb.music.bean.LrcFile;
 import com.lwb.music.bean.Song;
+import com.lwb.music.provider.MusicHelper;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -89,11 +92,99 @@ public class SongUtils {
             MediaStore.Files.FileColumns.TITLE
     };
 
+    private static final String UNKNOWN = "<未知>";
+
+    public static Song fileToMusic(File file) {
+        if (file == null || file.length() == 0 || !file.exists()) {
+            return null;
+        }
+        try {
+            MediaMetadataRetriever metadataRetriever = new MediaMetadataRetriever();
+            metadataRetriever.setDataSource(file.getAbsolutePath());
+            final int duration;
+
+            String keyDuration = metadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (keyDuration == null || !keyDuration.matches("\\d+")) {
+                return null;
+            }
+            duration = Integer.parseInt(keyDuration);
+
+            final String title = extractMetadata(metadataRetriever, MediaMetadataRetriever.METADATA_KEY_TITLE, file.getName());
+            final String artist = extractMetadata(metadataRetriever, MediaMetadataRetriever.METADATA_KEY_ARTIST, UNKNOWN);
+            final String album = extractMetadata(metadataRetriever, MediaMetadataRetriever.METADATA_KEY_ALBUM, UNKNOWN);
+
+            final Song song = new Song();
+            song.setTitle(title);
+            song.setArtist(artist);
+            song.setPath(file.getAbsolutePath());
+            song.setAlbum(album);
+            song.setDuration(duration);
+            song.setSize((int) file.length());
+            metadataRetriever.release();
+            return song;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private static String extractMetadata(MediaMetadataRetriever retriever, int key, String defaultValue) {
+        String value = retriever.extractMetadata(key);
+        if (TextUtils.isEmpty(value)) {
+            value = defaultValue;
+        }
+        return value;
+    }
+
+    public static void scanMp3File(File file, List<Song> store) {
+        String fileName = file.getAbsolutePath();
+        if (file.isDirectory()) {
+            if (file.listFiles() != null) {
+                for (File temp : file.listFiles()) {
+                    scanMp3File(temp, store);
+                }
+            }
+        } else {
+            if (fileName.toLowerCase().endsWith(".mp3")) {
+                Song song = SongUtils.fileToMusic(file);
+                if (song != null && song.getDuration() / 1000 > 60) {
+                    store.add(song);
+                }
+            }
+        }
+    }
+
+    public static void scanLrcFile(File file, List<LrcFile> store) {
+        String filePath = file.getAbsolutePath();
+        if (file.isDirectory()) {
+            if (file.listFiles() != null) {
+                for (File temp : file.listFiles()) {
+                    scanLrcFile(temp, store);
+                }
+            }
+        } else {
+            if (filePath.toLowerCase().endsWith(".lrc")) {
+                LrcFile lrcFile = new LrcFile();
+                lrcFile.setFileName(file.getName());
+                lrcFile.setPath(filePath);
+                store.add(lrcFile);
+            }
+        }
+    }
+
+    public static ArrayList<Song> scanSongFile(ContentResolver resolver) {
+        Cursor cursor = resolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Audio.Media.IS_MUSIC);
+        return cursorToSongList(cursor);
+//        ArrayList<Song> songs = new ArrayList<>();
+//        scanMp3File(Environment.getExternalStorageDirectory(), songs);
+//        return songs;
+    }
+
     public static ArrayList<LrcFile> scanLrcFile(ContentResolver resolver) {
         Uri uri = MediaStore.Files.getContentUri("external");
         String selection = null;
         String[] selectionArgs = null;
-        selection = "(" + MediaStore.Files.FileColumns.DATA + " LIKE '%.lrc'" + ")" ;
+        selection = "(" + MediaStore.Files.FileColumns.DATA + " LIKE '%.lrc'" + ")";
         selectionArgs = null;
         Cursor cursor = resolver.query(uri,
                 projection,
@@ -107,6 +198,7 @@ public class SongUtils {
             lrcFile.setPath(cursor.getString(0));
             lrcFile.setFileName(cursor.getString(1));
             lrcFileArrayList.add(lrcFile);
+            Log.i("TTTTT", lrcFile.getPath());
         }
         return lrcFileArrayList;
 
@@ -140,6 +232,11 @@ public class SongUtils {
             song.setPath(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.DATA)));
             song.setDisplayName(cursor.getString(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.DISPLAY_NAME)));
             song.setSize(cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.SIZE)));
+            song.setUpdateTime(cursor.getLong(cursor.getColumnIndex(MediaStore.Audio.AudioColumns.DATE_MODIFIED)));
+            int sheetIndex = cursor.getColumnIndex(MusicHelper.SongSheetColumn.SONG_SHEET_ID);
+            if (sheetIndex >= 0) {
+                song.setSheetId(cursor.getInt(sheetIndex));
+            }
             musicList.add(song);
         }
         return musicList;
@@ -155,6 +252,9 @@ public class SongUtils {
         contentValues.put(MediaStore.Audio.AudioColumns.DATA, song.getPath());
         contentValues.put(MediaStore.Audio.AudioColumns.SIZE, song.getSize());
         contentValues.put(MediaStore.Audio.AudioColumns.DATE_MODIFIED, System.currentTimeMillis());
+        if (song.getId() >= 0) {
+            contentValues.put(MusicHelper.SongSheetColumn.SONG_SHEET_ID, song.getSheetId());
+        }
         return contentValues;
     }
 

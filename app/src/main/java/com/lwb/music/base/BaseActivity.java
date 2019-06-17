@@ -43,6 +43,7 @@ public class BaseActivity extends AppCompatActivity {
                 transaction.addSharedElement(entry.getKey(), entry.getValue());
             }
         }
+        transaction.setCustomAnimations(R.anim.alpha_in_anim, R.anim.alpha_out_anim, R.anim.alpha_in_anim, R.anim.alpha_out_anim);
         transaction.replace(R.id.music_container, fragment, tagName);
         if (addToBackStack) {
             transaction.addToBackStack(tagName);

@@ -1,17 +1,3 @@
-/*
- * Copyright (C) 2017 wangchenyan
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
- * except in compliance with the License. You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the
- * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied. See the License for the specific language governing
- * permissions and limitations under the License.
- */
-
 package com.lwb.music.lrc;
 
 import android.os.Build;
@@ -41,7 +27,7 @@ class LrcEntry implements Comparable<LrcEntry> {
     public static final int GRAVITY_CENTER = 2;
     public static final int GRAVITY_RIGHT = 3;
 
-    private LrcEntry(long time, String text) {
+    public LrcEntry(long time, String text) {
         this.time = time;
         this.text = text;
     }
@@ -66,10 +52,10 @@ class LrcEntry implements Comparable<LrcEntry> {
             staticLayout = StaticLayout.Builder
                     .obtain(text, 0, text.length(), paint, width)
                     .setAlignment(align)
-                    .setLineSpacing(1.0f, 0f)
+                    .setLineSpacing(1.0f, 1.0f)
                     .build();
         } else {
-            staticLayout = new StaticLayout(text, paint, width, align, 1.0f, 0f, false);
+            staticLayout = new StaticLayout(text, paint, width, align, 1.0f, 1.0f, false);
         }
     }
 

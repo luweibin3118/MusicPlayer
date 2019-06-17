@@ -5,7 +5,6 @@ import android.content.ContentResolver;
 import android.database.Cursor;
 import android.os.Handler;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.view.View;
 import android.widget.TextView;
 
@@ -25,8 +24,6 @@ public class MusicHomeFragment extends BaseFragment {
 
     private ArrayList<Song> allMusicFiles;
 
-    private MusicRecentFragment musicRecentFragment;
-
     private ContentResolver resolver;
 
     Handler scanHandler = new Handler() {
@@ -36,7 +33,7 @@ public class MusicHomeFragment extends BaseFragment {
             switch (msg.what) {
                 case 1:
                     allMusicFiles = (ArrayList<Song>) msg.obj;
-                    musicAll.setText("所有歌曲(" + allMusicFiles.size() + ")");
+                    musicAll.setText("所有歌曲(" + allMusicFiles.size() + "首)");
                     break;
                 default:
                     break;
@@ -56,6 +53,7 @@ public class MusicHomeFragment extends BaseFragment {
         musicAll.setOnClickListener(this);
         view.findViewById(R.id.home_music_recent).setOnClickListener(this);
         view.findViewById(R.id.home_music_like).setOnClickListener(this);
+        view.findViewById(R.id.home_music_sheet).setOnClickListener(this);
         synchronized (App.class) {
             PermissionUtils.permission(Manifest.permission.READ_EXTERNAL_STORAGE,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE).callback(new PermissionUtils.SimpleCallback() {
@@ -76,7 +74,7 @@ public class MusicHomeFragment extends BaseFragment {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.home_music_all:
-                MusicAllListFragment.start(getActivity(), allMusicFiles, musicController);
+                MusicAllListFragment.start(getActivity(), allMusicFiles, musicController, "所有歌曲");
                 break;
             case R.id.home_music_like:
                 App.execute(new Runnable() {
@@ -88,7 +86,7 @@ public class MusicHomeFragment extends BaseFragment {
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                MusicAllListFragment.start(getActivity(), likeList, musicController);
+                                MusicAllListFragment.start(getActivity(), likeList, musicController, "收藏歌曲");
                             }
                         });
                     }
@@ -103,11 +101,16 @@ public class MusicHomeFragment extends BaseFragment {
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                MusicAllListFragment.start(getActivity(), recentList, musicController);
+                                MusicAllListFragment.start(getActivity(), recentList, musicController, "最近播放");
                             }
                         });
                     }
                 });
+                break;
+            case R.id.home_music_sheet:
+                BaseFragment fragment = new SongSheetFragment();
+                fragment.setMusicController(musicController);
+                startFragment(fragment);
                 break;
             default:
                 break;
@@ -118,10 +121,9 @@ public class MusicHomeFragment extends BaseFragment {
         App.execute(new Runnable() {
             @Override
             public void run() {
-                Cursor cursor = resolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Audio.Media.IS_MUSIC);
                 Message message = scanHandler.obtainMessage();
                 message.what = 1;
-                message.obj = SongUtils.cursorToSongList(cursor);
+                message.obj = SongUtils.scanSongFile(resolver);
                 message.sendToTarget();
             }
         });
@@ -133,4 +135,8 @@ public class MusicHomeFragment extends BaseFragment {
         scanHandler.removeCallbacksAndMessages(null);
     }
 
+    @Override
+    protected boolean showHeader() {
+        return false;
+    }
 }

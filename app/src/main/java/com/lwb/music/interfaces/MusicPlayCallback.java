@@ -22,4 +22,6 @@ public interface MusicPlayCallback {
     void onLikeChanged(Song song);
 
     void onLrcLoaded(Song song);
+
+    void onPrepareMusic(Song song);
 }

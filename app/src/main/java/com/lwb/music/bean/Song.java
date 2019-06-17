@@ -8,6 +8,7 @@ import android.os.Parcelable;
 import com.lwb.music.utils.SongUtils;
 
 import java.io.File;
+import java.lang.ref.SoftReference;
 import java.lang.ref.WeakReference;
 
 
@@ -36,6 +37,12 @@ public class Song implements Parcelable {
     private File songFile;
 
     private File lrcFile;
+
+    private int sheetId = -1;
+
+    private long updateTime;
+
+    private SoftReference<String> lrc;
 
     public Song() {
         // Empty
@@ -73,8 +80,32 @@ public class Song implements Parcelable {
         }
     }
 
+    public long getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(long updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public int getSheetId() {
+        return sheetId;
+    }
+
+    public void setSheetId(int sheetId) {
+        this.sheetId = sheetId;
+    }
+
     public File getLrcFile() {
         return lrcFile;
+    }
+
+    public SoftReference<String> getLrc() {
+        return lrc;
+    }
+
+    public void setLrc(SoftReference<String> lrc) {
+        this.lrc = lrc;
     }
 
     public void setLrcFile(File lrcFile) {
@@ -171,6 +202,16 @@ public class Song implements Parcelable {
 
     public void setNextSong(Song nextSong) {
         this.nextSong = nextSong;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Song) {
+            Song temp = (Song) obj;
+            return path.equals(temp.getPath());
+        } else {
+            return super.equals(obj);
+        }
     }
 
     @Override

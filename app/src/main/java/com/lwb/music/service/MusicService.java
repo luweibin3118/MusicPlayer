@@ -7,22 +7,17 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.ContentResolver;
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Message;
-import android.provider.MediaStore;
 import android.support.v4.app.NotificationCompat;
 import android.text.TextUtils;
 import android.util.Log;
@@ -37,7 +32,6 @@ import com.lwb.music.bean.LrcFile;
 import com.lwb.music.bean.Song;
 import com.lwb.music.constants.MusicConstants;
 import com.lwb.music.interfaces.MusicPlayCallback;
-import com.lwb.music.provider.MusicHelper;
 import com.lwb.music.provider.MusicProvider;
 import com.lwb.music.ui.MusicActivity;
 import com.lwb.music.utils.SongUtils;
@@ -53,8 +47,8 @@ public class MusicService extends Service {
     private static final float mVolume = 0.05f;
     private Song playingSong;
     private List<Song> songList;
-    private final String CHANNEL_ID = "com.lwb.music" ;
-    private final String CHANNEL_NAME = "Music" ;
+    private final String CHANNEL_ID = "com.lwb.music";
+    private final String CHANNEL_NAME = "Music";
     private Notification notification;
     private Notification.Builder builder;
     private RemoteViews remoteViews;
@@ -75,6 +69,23 @@ public class MusicService extends Service {
                         playingSong.setLrcFile(getCurrentSonLrc());
                         for (MusicPlayCallback callback : callbacks) {
                             callback.onLrcLoaded(playingSong);
+                        }
+                    }
+                    break;
+                case 2:
+                    songList = (List<Song>) msg.obj;
+                    if (songList != null && !songList.isEmpty()) {
+                        String playingPath = SPUtils.getInstance().getString(MusicConstants.MUSIC_PLAYING_PATH);
+                        for (Song song : songList) {
+                            if (song.getPath().equals(playingPath)) {
+                                song = SongUtils.getPlaySongByType(songList, song,
+                                        SPUtils.getInstance().getInt(MusicConstants.MUSIC_PLAY_TYPE, SongUtils.TYPE_1));
+                                playingSong = song;
+                                for (MusicPlayCallback callback : callbacks) {
+                                    callback.onPrepareMusic(song);
+                                }
+                                break;
+                            }
                         }
                     }
                     break;
@@ -103,6 +114,7 @@ public class MusicService extends Service {
                 Manifest.permission.WRITE_EXTERNAL_STORAGE).callback(new PermissionUtils.SimpleCallback() {
             @Override
             public void onGranted() {
+                loadPlayingList();
                 scanLrc();
             }
 
@@ -112,6 +124,20 @@ public class MusicService extends Service {
             }
         }).request();
         requestTheAudioFocus();
+    }
+
+    private void loadPlayingList() {
+        App.execute(new Runnable() {
+            @Override
+            public void run() {
+                Cursor cursor = resolver.query(MusicProvider.MUSIC_PLAYING_LIST_URI, null, null, null, null);
+                List<Song> playingList = SongUtils.cursorToSongList(cursor);
+                Message message = musicHandler.obtainMessage();
+                message.obj = playingList;
+                message.what = 2;
+                message.sendToTarget();
+            }
+        });
     }
 
     private int requestTheAudioFocus() {
@@ -274,10 +300,17 @@ public class MusicService extends Service {
     }
 
     private void playSong(final Song song) {
+        playSong(song, 0);
+    }
+
+    private void playSong(final Song song, final int position) {
+        Log.i("TTTTTT", "play position: " + position);
         if (song == null) {
             return;
         }
         try {
+            SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_PATH, song.getPath());
+            SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_DURATION, 0);
             mediaPlayer.reset();
             if (!song.getSongFile().exists()) {
                 return;
@@ -288,6 +321,7 @@ public class MusicService extends Service {
             mediaPlayer.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
                 @Override
                 public void onPrepared(final MediaPlayer mp) {
+                    mp.seekTo(position);
                     mp.start();
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                         startForegroundService(musicServiceIntent);
@@ -380,6 +414,9 @@ public class MusicService extends Service {
         if (mediaPlayer.isPlaying()) {
             mediaPlayer.pause();
         }
+        SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_PATH, playingSong.getPath());
+        SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_DURATION, mediaPlayer.getCurrentPosition());
+        Log.i("TTTTTT", "saveTime: " + mediaPlayer.getCurrentPosition());
         if (notification) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 startForegroundService(musicServiceIntent);
@@ -397,7 +434,11 @@ public class MusicService extends Service {
             return;
         }
         if (!mediaPlayer.isPlaying()) {
-            mediaPlayer.start();
+            if (mediaPlayer.getCurrentPosition() > 1000) {
+                mediaPlayer.start();
+            } else {
+                playSong(playingSong, SPUtils.getInstance().getInt(MusicConstants.MUSIC_PLAYING_DURATION));
+            }
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             startForegroundService(musicServiceIntent);
@@ -424,18 +465,51 @@ public class MusicService extends Service {
         return result;
     }
 
+    long positionSaveTime = 0;
+
+    int lastPlayDuration = 0;
+
     public int getPosition() {
+        if (!mediaPlayer.isPlaying()) {
+            if (lastPlayDuration == 0) {
+                lastPlayDuration = SPUtils.getInstance().getInt(MusicConstants.MUSIC_PLAYING_DURATION);
+            }
+            return lastPlayDuration;
+        }
+
         try {
-            return mediaPlayer.getCurrentPosition();
+            int position = mediaPlayer.getCurrentPosition();
+
+            if (position > 5000 && (System.currentTimeMillis() - positionSaveTime) > 5000 && (position / 1000) % 8 == 0) {
+                SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_PATH, playingSong.getPath());
+                SPUtils.getInstance().put(MusicConstants.MUSIC_PLAYING_DURATION, position);
+                positionSaveTime = System.currentTimeMillis();
+                Log.i("TTTTTT", "saveTime: " + position);
+            }
+
+            return position;
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
         }
     }
 
+    private void savePlayingList(final List<Song> playingList) {
+        App.execute(new Runnable() {
+            @Override
+            public void run() {
+                resolver.delete(MusicProvider.MUSIC_PLAYING_LIST_URI, null, null);
+                for (Song song : playingList) {
+                    resolver.insert(MusicProvider.MUSIC_PLAYING_LIST_URI, SongUtils.songToContentValues(song));
+                }
+            }
+        });
+    }
+
     public class MusicBinder extends Binder {
         public void playMusic(List<Song> songList, Song song) {
             MusicService.this.songList = songList;
+            savePlayingList(songList);
             playSong(SongUtils.getPlaySongByType(songList, song,
                     SPUtils.getInstance().getInt(MusicConstants.MUSIC_PLAY_TYPE, SongUtils.TYPE_1)));
         }
@@ -513,16 +587,16 @@ public class MusicService extends Service {
                     MusicConstants.MUSIC_PLAY_TYPE,
                     (SPUtils.getInstance().getInt(MusicConstants.MUSIC_PLAY_TYPE, SongUtils.TYPE_1) + 1) % 3);
             SongUtils.getPlaySongByType(songList, playingSong, SPUtils.getInstance().getInt(MusicConstants.MUSIC_PLAY_TYPE));
-            String toast = "" ;
+            String toast = "";
             switch (SPUtils.getInstance().getInt(MusicConstants.MUSIC_PLAY_TYPE)) {
                 case SongUtils.TYPE_1:
-                    toast = "列表循环" ;
+                    toast = "列表循环";
                     break;
                 case SongUtils.TYPE_2:
-                    toast = "单曲循环" ;
+                    toast = "单曲循环";
                     break;
                 case SongUtils.TYPE_3:
-                    toast = "随机播放" ;
+                    toast = "随机播放";
                     break;
                 default:
                     break;
@@ -557,7 +631,6 @@ public class MusicService extends Service {
                             if (song != playingSong) {
                                 return;
                             }
-//                            ToastUtils.showShort(song.isFavorite() ? "收藏成功！" : "已取消收藏");
                             for (MusicPlayCallback callback : callbacks) {
                                 callback.onLikeChanged(song);
                             }
@@ -571,4 +644,3 @@ public class MusicService extends Service {
     private List<MusicPlayCallback> callbacks = new ArrayList<>();
 
 }
-
