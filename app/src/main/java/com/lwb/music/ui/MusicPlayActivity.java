@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Parcelable;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.support.v4.view.ViewPager;
@@ -28,7 +27,7 @@ import com.lwb.music.R;
 import com.lwb.music.bean.Song;
 import com.lwb.music.constants.MusicConstants;
 import com.lwb.music.lrc.MusicLrcView;
-import com.lwb.music.provider.MusicProvider;
+import com.lwb.music.provider.MusicDataModel;
 import com.lwb.music.utils.FastBlurUtil;
 import com.lwb.music.utils.SongUtils;
 import com.lwb.music.utils.TimeUtils;
@@ -238,8 +237,7 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
     }
 
     private boolean isFavorite(Song song) {
-        return getContentResolver().query(MusicProvider.MUSIC_LIKE_URI, null,
-                MediaStore.Audio.AudioColumns.DISPLAY_NAME + "=?", new String[]{song.getDisplayName()}, null).getCount() > 0;
+        return MusicDataModel.queryLikeSongByName(song.getDisplayName()).getCount() > 0;
     }
 
     private void loadLru(final Song song) {

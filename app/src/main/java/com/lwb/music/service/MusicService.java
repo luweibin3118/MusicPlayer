@@ -6,7 +6,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
@@ -31,7 +30,7 @@ import com.lwb.music.bean.LrcFile;
 import com.lwb.music.bean.Song;
 import com.lwb.music.constants.MusicConstants;
 import com.lwb.music.interfaces.MusicPlayCallback;
-import com.lwb.music.provider.MusicProvider;
+import com.lwb.music.provider.MusicDataModel;
 import com.lwb.music.ui.MusicActivity;
 import com.lwb.music.utils.SongUtils;
 
@@ -53,10 +52,10 @@ public class MusicService extends Service {
     private RemoteViews remoteViews;
     private Intent musicServiceIntent;
     private PendingIntent lastIntent, playIntent, nextIntent, closeIntent;
-    private ContentResolver resolver;
     private ArrayList<LrcFile> lrcFiles = null;
     private AudioManager mAudioManager;
     private AudioManager.OnAudioFocusChangeListener mAudioFocusChangeListener;
+    private MusicBinder musicBinder = new MusicBinder();
     private Handler musicHandler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -99,7 +98,7 @@ public class MusicService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return new MusicBinder();
+        return musicBinder;
     }
 
     @Override
@@ -107,7 +106,6 @@ public class MusicService extends Service {
         super.onCreate();
         mediaPlayer = new MediaPlayer();
         musicServiceIntent = new Intent(this, MusicService.class);
-        resolver = getContentResolver();
         initNotification();
         PermissionUtils.permission(Manifest.permission.READ_EXTERNAL_STORAGE,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE).callback(new PermissionUtils.SimpleCallback() {
@@ -129,7 +127,7 @@ public class MusicService extends Service {
         App.execute(new Runnable() {
             @Override
             public void run() {
-                Cursor cursor = resolver.query(MusicProvider.MUSIC_PLAYING_LIST_URI, null, null, null, null);
+                Cursor cursor = MusicDataModel.queryPlayingList();
                 List<Song> playingList = SongUtils.cursorToSongList(cursor);
                 Message message = musicHandler.obtainMessage();
                 message.obj = playingList;
@@ -188,7 +186,7 @@ public class MusicService extends Service {
             @Override
             public void run() {
                 Message message = musicHandler.obtainMessage();
-                message.obj = SongUtils.scanLrcFile(resolver);
+                message.obj = SongUtils.scanLrcFile();
                 message.what = 1;
                 message.sendToTarget();
             }
@@ -329,8 +327,7 @@ public class MusicService extends Service {
                         App.execute(new Runnable() {
                             @Override
                             public void run() {
-                                resolver.insert(MusicProvider.MUSIC_RECENT_URI,
-                                        SongUtils.songToContentValues(song));
+                                MusicDataModel.insertRecentSong(song);
                             }
                         });
                     }
@@ -504,9 +501,9 @@ public class MusicService extends Service {
         App.execute(new Runnable() {
             @Override
             public void run() {
-                resolver.delete(MusicProvider.MUSIC_PLAYING_LIST_URI, null, null);
+                MusicDataModel.deleteAllPlayingList();
                 for (Song song : playingList) {
-                    resolver.insert(MusicProvider.MUSIC_PLAYING_LIST_URI, SongUtils.songToContentValues(song));
+                    MusicDataModel.insertPlayingSong(song);
                 }
             }
         });
@@ -634,7 +631,7 @@ public class MusicService extends Service {
                 @Override
                 public void run() {
                     final Song song = playingSong;
-                    resolver.insert(MusicProvider.MUSIC_LIKE_URI, SongUtils.songToContentValues(playingSong));
+                    MusicDataModel.insertLikeSong(song);
                     musicHandler.post(new Runnable() {
                         @Override
                         public void run() {

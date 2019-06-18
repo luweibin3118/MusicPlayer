@@ -1,6 +1,5 @@
 package com.lwb.music.utils;
 
-import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
@@ -8,8 +7,10 @@ import android.net.Uri;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 
+import com.lwb.music.App;
 import com.lwb.music.bean.LrcFile;
 import com.lwb.music.bean.Song;
+import com.lwb.music.provider.MusicDataModel;
 import com.lwb.music.provider.MusicHelper;
 
 import java.io.File;
@@ -171,25 +172,21 @@ public class SongUtils {
         }
     }
 
-    public static ArrayList<Song> scanSongFile(ContentResolver resolver) {
-        Cursor cursor = resolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Audio.Media.IS_MUSIC);
+    public static ArrayList<Song> scanSongFile() {
+        Cursor cursor = MusicDataModel.queryAll();
         return cursorToSongList(cursor);
 //        ArrayList<Song> songs = new ArrayList<>();
 //        scanMp3File(Environment.getExternalStorageDirectory(), songs);
 //        return songs;
     }
 
-    public static ArrayList<LrcFile> scanLrcFile(ContentResolver resolver) {
+    public static ArrayList<LrcFile> scanLrcFile() {
         Uri uri = MediaStore.Files.getContentUri("external");
         String selection = null;
         String[] selectionArgs = null;
         selection = "(" + MediaStore.Files.FileColumns.DATA + " LIKE '%.lrc'" + ")";
         selectionArgs = null;
-        Cursor cursor = resolver.query(uri,
-                projection,
-                selection,
-                selectionArgs,
-                null);
+        Cursor cursor = App.resolver.query(uri, projection, selection, selectionArgs, null);
 
         ArrayList<LrcFile> lrcFileArrayList = new ArrayList<>();
         while (cursor.moveToNext()) {

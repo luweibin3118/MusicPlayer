@@ -1,10 +1,7 @@
 package com.lwb.music.ui;
 
-import android.content.ContentUris;
-import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
@@ -24,8 +21,7 @@ import com.lwb.music.base.BaseFragment;
 import com.lwb.music.bean.Song;
 import com.lwb.music.bean.SongSheet;
 import com.lwb.music.interfaces.MusicController;
-import com.lwb.music.provider.MusicHelper;
-import com.lwb.music.provider.MusicProvider;
+import com.lwb.music.provider.MusicDataModel;
 import com.lwb.music.utils.SongUtils;
 
 import java.util.Collections;
@@ -127,12 +123,7 @@ public class SongSheetListFragment extends BaseFragment implements SongSelectorF
                     for (Song song : list) {
                         i++;
                         song.setUpdateTime(System.currentTimeMillis() + i);
-                        ContentValues contentValues = SongUtils.songToContentValues(song);
-//                        ContentValues contentValues = new ContentValues();
-//                        contentValues.put(MediaStore.Audio.AudioColumns.DATE_MODIFIED, System.currentTimeMillis() + i);
-                        resolver.update(MusicProvider.MUSIC_SONG_SHEET_DETAIL_URI, contentValues,
-                                MusicHelper.SongSheetColumn.SONG_SHEET_ID + "=? and " + MediaStore.Audio.AudioColumns._ID + "=?",
-                                new String[]{songSheet.getSheetId() + "", song.getId() + ""});
+                        MusicDataModel.updateSongSheetSort(song, songSheet);
                     }
                 }
             });
@@ -162,7 +153,7 @@ public class SongSheetListFragment extends BaseFragment implements SongSelectorF
             App.execute(new Runnable() {
                 @Override
                 public void run() {
-                    Cursor cursor = resolver.query(ContentUris.withAppendedId(MusicProvider.MUSIC_SONG_SHEET_DETAIL_URI, songSheet.getSheetId()), null, null, null, null);
+                    Cursor cursor = MusicDataModel.querySongListBySheetId(songSheet.getSheetId());
                     final List<Song> songList = SongUtils.cursorToSongList(cursor);
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
@@ -185,22 +176,18 @@ public class SongSheetListFragment extends BaseFragment implements SongSelectorF
                     for (Song tempSong : selectedSongs) {
                         if (!list.contains(tempSong)) {
                             tempSong.setSheetId(songSheet.getSheetId());
-                            resolver.insert(MusicProvider.MUSIC_SONG_SHEET_DETAIL_URI, SongUtils.songToContentValues(tempSong));
+                            MusicDataModel.insertSongToSongSheet(tempSong);
                         }
                     }
                     for (Song tempSong : list) {
                         if (!selectedSongs.contains(tempSong)) {
-                            resolver.delete(
-                                    MusicProvider.MUSIC_SONG_SHEET_DETAIL_URI,
-                                    MediaStore.Audio.AudioColumns.DATA + "=?",
-                                    new String[]{tempSong.getPath()});
+                            MusicDataModel.deleteSongFromSheetByPath(tempSong.getPath());
                         }
                     }
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {
-                            list = selectedSongs;
-                            adapter.setSongList(list);
+                            loadSongList();
                         }
                     });
                 }

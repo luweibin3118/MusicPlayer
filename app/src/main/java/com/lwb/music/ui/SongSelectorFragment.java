@@ -97,7 +97,7 @@ public class SongSelectorFragment extends BaseFragment {
         App.execute(new Runnable() {
             @Override
             public void run() {
-                final List<Song> songList = SongUtils.scanSongFile(resolver);
+                final List<Song> songList = SongUtils.scanSongFile();
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

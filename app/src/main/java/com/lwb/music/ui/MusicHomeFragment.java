@@ -1,7 +1,6 @@
 package com.lwb.music.ui;
 
 import android.Manifest;
-import android.content.ContentResolver;
 import android.database.Cursor;
 import android.os.Handler;
 import android.os.Message;
@@ -13,7 +12,7 @@ import com.lwb.music.App;
 import com.lwb.music.R;
 import com.lwb.music.base.BaseFragment;
 import com.lwb.music.bean.Song;
-import com.lwb.music.provider.MusicProvider;
+import com.lwb.music.provider.MusicDataModel;
 import com.lwb.music.utils.SongUtils;
 
 import java.util.ArrayList;
@@ -23,8 +22,6 @@ public class MusicHomeFragment extends BaseFragment {
     private TextView musicAll;
 
     private ArrayList<Song> allMusicFiles;
-
-    private ContentResolver resolver;
 
     Handler scanHandler = new Handler() {
         @Override
@@ -48,7 +45,6 @@ public class MusicHomeFragment extends BaseFragment {
 
     @Override
     protected void initView(View view) {
-        resolver = getContext().getContentResolver();
         musicAll = view.findViewById(R.id.home_music_all);
         musicAll.setOnClickListener(this);
         view.findViewById(R.id.home_music_recent).setOnClickListener(this);
@@ -80,8 +76,7 @@ public class MusicHomeFragment extends BaseFragment {
                 App.execute(new Runnable() {
                     @Override
                     public void run() {
-                        Cursor cursor = resolver.query(MusicProvider.MUSIC_LIKE_URI, null,
-                                null, null, null);
+                        Cursor cursor = MusicDataModel.queryLike();
                         final ArrayList<Song> likeList = SongUtils.cursorToSongList(cursor);
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
@@ -96,7 +91,7 @@ public class MusicHomeFragment extends BaseFragment {
                 App.execute(new Runnable() {
                     @Override
                     public void run() {
-                        final Cursor cursor = resolver.query(MusicProvider.MUSIC_RECENT_URI, null, null, null, null);
+                        final Cursor cursor = MusicDataModel.queryRecent();
                         final ArrayList<Song> recentList = SongUtils.cursorToSongList(cursor);
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
@@ -123,7 +118,7 @@ public class MusicHomeFragment extends BaseFragment {
             public void run() {
                 Message message = scanHandler.obtainMessage();
                 message.what = 1;
-                message.obj = SongUtils.scanSongFile(resolver);
+                message.obj = SongUtils.scanSongFile();
                 message.sendToTarget();
             }
         });

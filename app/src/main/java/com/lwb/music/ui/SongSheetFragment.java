@@ -1,6 +1,5 @@
 package com.lwb.music.ui;
 
-import android.content.ContentUris;
 import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
@@ -20,8 +19,7 @@ import com.lwb.music.R;
 import com.lwb.music.base.BaseDialogFragment;
 import com.lwb.music.base.BaseFragment;
 import com.lwb.music.bean.SongSheet;
-import com.lwb.music.provider.MusicHelper;
-import com.lwb.music.provider.MusicProvider;
+import com.lwb.music.provider.MusicDataModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -78,17 +76,14 @@ public class SongSheetFragment extends BaseFragment implements PopupMenu.OnMenuI
         App.execute(new Runnable() {
             @Override
             public void run() {
-                Cursor cursor = resolver.query(MusicProvider.MUSIC_SONG_SHEET_URI,
-                        null, null, null, null);
+                Cursor cursor = MusicDataModel.querySongSheet();
                 final List<SongSheet> songSheets = new ArrayList<>();
                 while (cursor.moveToNext()) {
                     SongSheet songSheet = new SongSheet();
                     songSheet.setSheetId(cursor.getInt(0));
                     songSheet.setSheetName(cursor.getString(1));
                     songSheet.setSheetCreateTime(cursor.getLong(2));
-                    Cursor countCursor = resolver.query(
-                            ContentUris.withAppendedId(MusicProvider.MUSIC_SONG_SHEET_DETAIL_URI, songSheet.getSheetId()),
-                            null, null, null, null);
+                    Cursor countCursor = MusicDataModel.querySongListBySheetId(songSheet.getSheetId());
                     songSheet.setSheetCount(countCursor.getCount());
                     songSheets.add(songSheet);
                 }
@@ -187,14 +182,7 @@ public class SongSheetFragment extends BaseFragment implements PopupMenu.OnMenuI
                     App.execute(new Runnable() {
                         @Override
                         public void run() {
-                            resolver.delete(
-                                    MusicProvider.MUSIC_SONG_SHEET_URI,
-                                    MusicHelper.SongSheetColumn.SONG_SHEET_ID + "=?",
-                                    new String[]{songSheet.getSheetId() + ""}
-                            );
-                            resolver.delete(MusicProvider.MUSIC_SONG_SHEET_DETAIL_URI,
-                                    MusicHelper.SongSheetColumn.SONG_SHEET_ID + "=?",
-                                    new String[]{songSheet.getSheetId() + ""});
+                            MusicDataModel.deleteSongSheetById(songSheet.getSheetId());
                             getActivity().runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
