@@ -4,13 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.media.MediaMetadataRetriever;
 import android.net.Uri;
+import android.os.Environment;
 import android.provider.MediaStore;
 import android.text.TextUtils;
 
 import com.lwb.music.App;
 import com.lwb.music.bean.LrcFile;
 import com.lwb.music.bean.Song;
-import com.lwb.music.provider.MusicDataModel;
 import com.lwb.music.provider.MusicHelper;
 
 import java.io.File;
@@ -173,11 +173,9 @@ public class SongUtils {
     }
 
     public static ArrayList<Song> scanSongFile() {
-        Cursor cursor = MusicDataModel.queryAll();
-        return cursorToSongList(cursor);
-//        ArrayList<Song> songs = new ArrayList<>();
-//        scanMp3File(Environment.getExternalStorageDirectory(), songs);
-//        return songs;
+        ArrayList<Song> songs = new ArrayList<>();
+        scanMp3File(Environment.getExternalStorageDirectory(), songs);
+        return songs;
     }
 
     public static ArrayList<LrcFile> scanLrcFile() {
@@ -195,6 +193,7 @@ public class SongUtils {
             lrcFile.setFileName(cursor.getString(1));
             lrcFileArrayList.add(lrcFile);
         }
+        cursor.close();
         return lrcFileArrayList;
 
     }

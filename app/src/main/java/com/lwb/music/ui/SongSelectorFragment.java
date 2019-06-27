@@ -15,7 +15,7 @@ import com.lwb.music.App;
 import com.lwb.music.R;
 import com.lwb.music.base.BaseFragment;
 import com.lwb.music.bean.Song;
-import com.lwb.music.utils.SongUtils;
+import com.lwb.music.provider.MusicDataModel;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -97,7 +97,7 @@ public class SongSelectorFragment extends BaseFragment {
         App.execute(new Runnable() {
             @Override
             public void run() {
-                final List<Song> songList = SongUtils.scanSongFile();
+                final List<Song> songList = MusicDataModel.queryAll();
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {

@@ -10,21 +10,36 @@ import com.lwb.music.bean.Song;
 import com.lwb.music.bean.SongSheet;
 import com.lwb.music.utils.SongUtils;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class MusicDataModel {
-    public static Cursor queryAll() {
-        return App.resolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Audio.Media.IS_MUSIC);
+    public static List<Song> queryAll() {
+        Cursor cursor = App.resolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, null, null, null, MediaStore.Audio.Media.IS_MUSIC);
+        ArrayList<Song> result = SongUtils.cursorToSongList(cursor);
+        cursor.close();
+        return result;
     }
 
-    public static Cursor queryLike() {
-        return App.resolver.query(MusicProvider.MUSIC_LIKE_URI, null, null, null, null);
+    public static ArrayList<Song> queryLike() {
+        Cursor cursor = App.resolver.query(MusicProvider.MUSIC_LIKE_URI, null, null, null, null);
+        ArrayList<Song> result = SongUtils.cursorToSongList(cursor);
+        cursor.close();
+        return result;
     }
 
-    public static Cursor queryRecent() {
-        return App.resolver.query(MusicProvider.MUSIC_RECENT_URI, null, null, null, null);
+    public static ArrayList<Song> queryRecent() {
+        Cursor cursor = App.resolver.query(MusicProvider.MUSIC_RECENT_URI, null, null, null, null);
+        ArrayList<Song> result = SongUtils.cursorToSongList(cursor);
+        cursor.close();
+        return result;
     }
 
-    public static Cursor queryPlayingList() {
-        return App.resolver.query(MusicProvider.MUSIC_PLAYING_LIST_URI, null, null, null, null);
+    public static List<Song> queryPlayingList() {
+        Cursor cursor = App.resolver.query(MusicProvider.MUSIC_PLAYING_LIST_URI, null, null, null, null);
+        ArrayList<Song> result = SongUtils.cursorToSongList(cursor);
+        cursor.close();
+        return result;
     }
 
     public static Cursor querySongSheetByName(String text) {
@@ -36,20 +51,37 @@ public class MusicDataModel {
         );
     }
 
-    public static Cursor querySongSheet() {
-        return App.resolver.query(MusicProvider.MUSIC_SONG_SHEET_URI,
+    public static List<SongSheet> querySongSheet() {
+        Cursor cursor = App.resolver.query(MusicProvider.MUSIC_SONG_SHEET_URI,
                 null, null, null, null);
+        final List<SongSheet> songSheets = new ArrayList<>();
+        while (cursor.moveToNext()) {
+            SongSheet songSheet = new SongSheet();
+            songSheet.setSheetId(cursor.getInt(0));
+            songSheet.setSheetName(cursor.getString(1));
+            songSheet.setSheetCreateTime(cursor.getLong(2));
+            songSheet.setSheetCount(MusicDataModel.querySongListBySheetId(songSheet.getSheetId()).size());
+            songSheets.add(songSheet);
+        }
+        cursor.close();
+        return songSheets;
     }
 
-    public static Cursor querySongListBySheetId(int sheetId) {
-        return App.resolver.query(
+    public static List<Song> querySongListBySheetId(int sheetId) {
+        Cursor cursor = App.resolver.query(
                 ContentUris.withAppendedId(MusicProvider.MUSIC_SONG_SHEET_DETAIL_URI, sheetId),
                 null, null, null, null);
+        ArrayList<Song> result = SongUtils.cursorToSongList(cursor);
+        cursor.close();
+        return result;
     }
 
-    public static Cursor queryLikeSongByName(String name) {
-        return App.resolver.query(MusicProvider.MUSIC_LIKE_URI, null,
+    public static List<Song> queryLikeSongByName(String name) {
+        Cursor cursor = App.resolver.query(MusicProvider.MUSIC_LIKE_URI, null,
                 MediaStore.Audio.AudioColumns.DISPLAY_NAME + "=?", new String[]{name}, null);
+        ArrayList<Song> result = SongUtils.cursorToSongList(cursor);
+        cursor.close();
+        return result;
     }
 
     public static void insertRecentSong(Song song) {

@@ -16,6 +16,7 @@ import com.lwb.music.interfaces.MusicController;
 import com.lwb.music.interfaces.MusicPlayCallback;
 import com.lwb.music.service.MusicService;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 public abstract class BaseMusicActivity extends BaseActivity implements MusicController, MusicPlayCallback {
@@ -28,13 +29,25 @@ public abstract class BaseMusicActivity extends BaseActivity implements MusicCon
 
     private boolean reAnim = false;
 
-    private Handler timeHandler = new Handler() {
-        @Override
-        public void handleMessage(final Message msg) {
-            super.handleMessage(msg);
-            onUpdateProcess(msg.arg1);
-        }
-    };
+    private Handler timeHandler = new MusicHandler(new WeakReference<>(this));
+
+    private void startTimer() {
+        timeHandler.removeCallbacksAndMessages(null);
+        timeHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                if (BaseMusicActivity.this.isDestroyed()) {
+                    return;
+                }
+                if (musicBinder != null) {
+                    Message message = timeHandler.obtainMessage();
+                    message.arg1 = musicBinder.getCurrentPosition();
+                    message.sendToTarget();
+                }
+                timeHandler.postDelayed(this, 1000);
+            }
+        });
+    }
 
     ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
@@ -70,19 +83,21 @@ public abstract class BaseMusicActivity extends BaseActivity implements MusicCon
         }
     }
 
-    private void startTimer() {
-        timeHandler.removeCallbacksAndMessages(null);
-        timeHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                if (musicBinder != null) {
-                    Message message = timeHandler.obtainMessage();
-                    message.arg1 = musicBinder.getCurrentPosition();
-                    message.sendToTarget();
-                }
-                timeHandler.postDelayed(this, 1000);
+    private static class MusicHandler extends Handler {
+
+        WeakReference<BaseMusicActivity> activity;
+
+        public MusicHandler(WeakReference<BaseMusicActivity> activity) {
+            this.activity = activity;
+        }
+
+        @Override
+        public void handleMessage(final Message msg) {
+            super.handleMessage(msg);
+            if (activity != null && activity.get() != null) {
+                activity.get().onUpdateProcess(msg.arg1);
             }
-        });
+        }
     }
 
     private void stopTimer() {

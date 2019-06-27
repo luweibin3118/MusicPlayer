@@ -8,7 +8,6 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -127,8 +126,7 @@ public class MusicService extends Service {
         App.execute(new Runnable() {
             @Override
             public void run() {
-                Cursor cursor = MusicDataModel.queryPlayingList();
-                List<Song> playingList = SongUtils.cursorToSongList(cursor);
+                List<Song> playingList = MusicDataModel.queryPlayingList();
                 Message message = musicHandler.obtainMessage();
                 message.obj = playingList;
                 message.what = 2;

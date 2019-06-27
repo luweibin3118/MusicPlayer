@@ -70,7 +70,7 @@ public class MusicActivity extends BaseMusicActivity implements View.OnClickList
         findViewById(R.id.play_music_info).setOnClickListener(this);
         MusicHomeFragment fragment = new MusicHomeFragment();
         fragment.setMusicController(this);
-        startFragment(fragment, false);
+        startFragment(fragment, getContainerId(), false);
         if (musicServiceIntent != null) {
             startService(musicServiceIntent);
         }
@@ -85,7 +85,7 @@ public class MusicActivity extends BaseMusicActivity implements View.OnClickList
             } else {
                 play_music_img.setImageResource(R.drawable.ic_play_music);
             }
-            play_music_btn.setImageResource(isPlaying() ? R.drawable.ic_play_pause : R.drawable.ic_play_start);
+            play_music_btn.setImageResource(R.drawable.ic_play_pause);
             play_music_title.setText(song.getTitle() + " - " + song.getArtist());
             play_music_album.setText(song.getAlbum());
             play_sum_duration.setText(TimeUtils.formatDuration(song.getDuration()));
@@ -160,6 +160,15 @@ public class MusicActivity extends BaseMusicActivity implements View.OnClickList
     protected void onDestroy() {
         stopServiceIfNotPlay();
         MusicAllListFragment.destroy();
+        if (playAnimator != null) {
+            playAnimator.cancel();
+            playAnimator = null;
+        }
         super.onDestroy();
+    }
+
+    @Override
+    protected int getContainerId() {
+        return R.id.music_container;
     }
 }

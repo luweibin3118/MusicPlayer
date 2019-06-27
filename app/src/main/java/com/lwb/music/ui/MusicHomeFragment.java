@@ -1,7 +1,6 @@
 package com.lwb.music.ui;
 
 import android.Manifest;
-import android.database.Cursor;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
@@ -13,7 +12,6 @@ import com.lwb.music.R;
 import com.lwb.music.base.BaseFragment;
 import com.lwb.music.bean.Song;
 import com.lwb.music.provider.MusicDataModel;
-import com.lwb.music.utils.SongUtils;
 
 import java.util.ArrayList;
 
@@ -76,8 +74,7 @@ public class MusicHomeFragment extends BaseFragment {
                 App.execute(new Runnable() {
                     @Override
                     public void run() {
-                        Cursor cursor = MusicDataModel.queryLike();
-                        final ArrayList<Song> likeList = SongUtils.cursorToSongList(cursor);
+                        final ArrayList<Song> likeList = MusicDataModel.queryLike();
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -91,8 +88,7 @@ public class MusicHomeFragment extends BaseFragment {
                 App.execute(new Runnable() {
                     @Override
                     public void run() {
-                        final Cursor cursor = MusicDataModel.queryRecent();
-                        final ArrayList<Song> recentList = SongUtils.cursorToSongList(cursor);
+                        final ArrayList<Song> recentList = MusicDataModel.queryRecent();
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -118,7 +114,7 @@ public class MusicHomeFragment extends BaseFragment {
             public void run() {
                 Message message = scanHandler.obtainMessage();
                 message.what = 1;
-                message.obj = SongUtils.scanSongFile();
+                message.obj = MusicDataModel.queryAll();
                 message.sendToTarget();
             }
         });

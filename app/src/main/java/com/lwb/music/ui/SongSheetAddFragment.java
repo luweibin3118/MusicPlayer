@@ -25,9 +25,11 @@ public class SongSheetAddFragment extends BaseDialogFragment {
                 if (!TextUtils.isEmpty(text)) {
                     Cursor cursor = MusicDataModel.querySongSheetByName(text);
                     if (cursor.getCount() != 0) {
+                        cursor.close();
                         ToastUtils.showShort("该歌单已存在！");
                         return;
                     }
+                    cursor.close();
 
                     SongSheet songSheet = new SongSheet();
                     songSheet.setSheetName(text);

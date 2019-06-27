@@ -1,6 +1,5 @@
 package com.lwb.music.ui;
 
-import android.database.Cursor;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.GridLayoutManager;
@@ -22,7 +21,6 @@ import com.lwb.music.bean.Song;
 import com.lwb.music.bean.SongSheet;
 import com.lwb.music.interfaces.MusicController;
 import com.lwb.music.provider.MusicDataModel;
-import com.lwb.music.utils.SongUtils;
 
 import java.util.Collections;
 import java.util.List;
@@ -153,8 +151,7 @@ public class SongSheetListFragment extends BaseFragment implements SongSelectorF
             App.execute(new Runnable() {
                 @Override
                 public void run() {
-                    Cursor cursor = MusicDataModel.querySongListBySheetId(songSheet.getSheetId());
-                    final List<Song> songList = SongUtils.cursorToSongList(cursor);
+                    final List<Song> songList = MusicDataModel.querySongListBySheetId(songSheet.getSheetId());
                     getActivity().runOnUiThread(new Runnable() {
                         @Override
                         public void run() {

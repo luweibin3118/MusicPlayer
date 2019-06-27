@@ -126,7 +126,8 @@ public class MusicAllListFragment extends BaseFragment {
         bundle.putString("title", title);
         allListFragment.setArguments(bundle);
         if (activity instanceof BaseActivity) {
-            ((BaseActivity) activity).startFragment(allListFragment);
+            BaseActivity baseActivity = (BaseActivity) activity;
+            baseActivity.startFragment(allListFragment);
         }
     }
 

@@ -186,6 +186,10 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
     protected void onDestroy() {
         super.onDestroy();
         lrcHandler.removeCallbacksAndMessages(null);
+        if (playAnimator != null) {
+            playAnimator.cancel();
+            playAnimator = null;
+        }
     }
 
     @Override
@@ -237,7 +241,7 @@ public class MusicPlayActivity extends BaseMusicActivity implements View.OnClick
     }
 
     private boolean isFavorite(Song song) {
-        return MusicDataModel.queryLikeSongByName(song.getDisplayName()).getCount() > 0;
+        return MusicDataModel.queryLikeSongByName(song.getDisplayName()).size() > 0;
     }
 
     private void loadLru(final Song song) {

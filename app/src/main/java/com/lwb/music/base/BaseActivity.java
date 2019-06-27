@@ -20,19 +20,23 @@ public class BaseActivity extends AppCompatActivity {
     }
 
     public void startFragment(Fragment fragment) {
-        startFragment(fragment, true, null);
+        startFragment(fragment, getContainerId());
     }
 
-    public void startFragment(Fragment fragment, boolean addToBackStack) {
-        startFragment(fragment, addToBackStack, null);
+    public void startFragment(Fragment fragment, int containerId) {
+        startFragment(fragment, containerId, true, null);
     }
 
-    public void startFragment(Fragment fragment, Map<View, String> sharedElements) {
-        startFragment(fragment, true, sharedElements);
+    public void startFragment(Fragment fragment, int containerId, boolean addToBackStack) {
+        startFragment(fragment, containerId, addToBackStack, null);
+    }
+
+    public void startFragment(Fragment fragment, int containerId, Map<View, String> sharedElements) {
+        startFragment(fragment, containerId, true, sharedElements);
     }
 
 
-    public void startFragment(Fragment fragment, boolean addToBackStack, Map<View, String> sharedElements) {
+    public void startFragment(Fragment fragment, int containerId, boolean addToBackStack, Map<View, String> sharedElements) {
         String tagName = fragment.getClass().getSimpleName();
         FragmentTransaction transaction = getSupportFragmentManager()
                 .beginTransaction();
@@ -44,12 +48,16 @@ public class BaseActivity extends AppCompatActivity {
             }
         }
         transaction.setCustomAnimations(R.anim.alpha_in_anim, R.anim.alpha_out_anim, R.anim.alpha_in_anim, R.anim.alpha_out_anim);
-        transaction.replace(R.id.music_container, fragment, tagName);
+        transaction.replace(containerId, fragment, tagName);
         if (addToBackStack) {
             transaction.addToBackStack(tagName);
         } else {
             transaction.disallowAddToBackStack();
         }
         transaction.commit();
+    }
+
+    protected int getContainerId() {
+        return 0;
     }
 }

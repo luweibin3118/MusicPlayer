@@ -1,6 +1,5 @@
 package com.lwb.music.ui;
 
-import android.database.Cursor;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
@@ -21,7 +20,6 @@ import com.lwb.music.base.BaseFragment;
 import com.lwb.music.bean.SongSheet;
 import com.lwb.music.provider.MusicDataModel;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class SongSheetFragment extends BaseFragment implements PopupMenu.OnMenuItemClickListener, BaseDialogFragment.OnDismissCallback {
@@ -76,17 +74,7 @@ public class SongSheetFragment extends BaseFragment implements PopupMenu.OnMenuI
         App.execute(new Runnable() {
             @Override
             public void run() {
-                Cursor cursor = MusicDataModel.querySongSheet();
-                final List<SongSheet> songSheets = new ArrayList<>();
-                while (cursor.moveToNext()) {
-                    SongSheet songSheet = new SongSheet();
-                    songSheet.setSheetId(cursor.getInt(0));
-                    songSheet.setSheetName(cursor.getString(1));
-                    songSheet.setSheetCreateTime(cursor.getLong(2));
-                    Cursor countCursor = MusicDataModel.querySongListBySheetId(songSheet.getSheetId());
-                    songSheet.setSheetCount(countCursor.getCount());
-                    songSheets.add(songSheet);
-                }
+                final List<SongSheet> songSheets = MusicDataModel.querySongSheet();
                 getActivity().runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
